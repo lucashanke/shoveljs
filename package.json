@@ -4,7 +4,7 @@
   "author": "Lucas Hanke <lucashanke@duck.com>",
   "description": "CLI to help moving messages from one rabbitmq queue to another",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
+    "registry": "https://registry.npmjs.org"
   },
   "keywords": [
     "rabbitmq",
