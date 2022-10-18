@@ -1,18 +1,35 @@
 {
-  "name": "shoveljs",
-  "version": "1.0.0",
+  "name": "@lucashanke/shoveljs",
+  "version": "0.0.1",
+  "author": "Lucas Hanke <lucashanke@duck.com>",
   "description": "CLI to help moving messages from one rabbitmq queue to another",
-  "main": "bin/index.js",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "keywords": [
+    "rabbitmq",
+    "shovel",
+    "queues",
+    "messages"
+  ],
   "bin": {
-    "shoveljs": "./bin/index.js"
+    "shoveljs": "bin/cli.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "amqplib": "^0.10.0",
     "yargs": "^17.5.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucashanke/shoveljs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lucashanke/shoveljs/issues"
+  },
+  "homepage": "https://github.com/lucashanke/shoveljs#readme"
 }
