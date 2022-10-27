@@ -1,6 +1,6 @@
 {
   "name": "@lucashanke/shoveljs",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "author": "Lucas Hanke <lucashanke@duck.com>",
   "description": "CLI to help moving messages from one rabbitmq queue to another",
   "publishConfig": {
