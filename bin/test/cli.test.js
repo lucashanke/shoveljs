@@ -44,7 +44,10 @@ const assertMessagesInQueue = async (expectedMessages, queue) => {
 const runCommand = async (...args) => {
   process.argv = ['node', 'cli.js', ...args];
   // eslint-disable-next-line global-require
-  return require('../cli');
+  require('../cli');
+
+  // eslint-disable-next-line no-promise-executor-return
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 };
 
 describe('cli', () => {
@@ -75,8 +78,6 @@ describe('cli', () => {
 
       await runCommand('move', origin, destination, '-u', user, '-p', password, '--ssl', 'false');
 
-      // eslint-disable-next-line no-promise-executor-return
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       expect(consoleSpy).toBeCalledWith('No messages to shovel.');
     });
 
