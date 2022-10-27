@@ -34,7 +34,5 @@ const setupEnvironment = async () => {
 };
 
 module.exports = async () => {
-  if (!process.env.CI) {
-    await setupEnvironment();
-  }
+  await setupEnvironment();
 };
