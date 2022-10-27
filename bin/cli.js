@@ -1,61 +1,60 @@
 #! /usr/bin/env node
-const yargs = require("yargs");
-const { hideBin } = require('yargs/helpers')
-const amqplib = require('amqplib/callback_api');
+const yargs = require('yargs');
+const { hideBin } = require('yargs/helpers');
+const amqplib = require('amqplib');
 
-
+// eslint-disable-next-line no-unused-expressions
 yargs(hideBin(process.argv))
   .command(
-      'move <originQueue> <destinationQueue>',
-      'move messages from origin queue to destination queue', 
-      (yargs) => {
-    return yargs
-    .positional('originQueue', { describe: 'queue to get messages from' })
-    .positional('destinationQueue', { describe: 'exchange to which the messages should be published' })
-    .option("h", { alias:"host", describe: "RabbitMQ server host", type: "string", default: 'localhost' })     
-    .option("P", { alias:"port", describe: "RabbitMQ server port", type: "number", default: 5672 })
-    .option("u", { alias:"user", describe: "RabbitMQ server user", type: "string", demandOption: true })   
-    .option("p", { alias:"password", describe: "RabbitMQ server user", type: "string", demandOption: true })   
-  }, (argv) => {
-    const { host, port, user, password, originQueue, destinationQueue } = argv;
-    amqplib.connect(`amqps://${user}:${password}@${host}:${port}`, (err, conn) => {
-        if (err) throw err;
+    'move <originQueue> <destinationQueue>',
+    'move messages from origin queue to destination queue',
+    // eslint-disable-next-line no-shadow
+    (yargs) => yargs
+      .positional('originQueue', { describe: 'queue to get messages from' })
+      .positional('destinationQueue', { describe: 'exchange the messages should be published to' })
+      .option('ssl', { describe: 'RabbitMQ connection over ssl', type: 'boolean', default: true })
+      .option('h', { alias: 'host', describe: 'RabbitMQ host', type: 'string', default: 'localhost' })
+      .option('P', { alias: 'port', describe: 'RabbitMQ port', type: 'number', default: 5672 })
+      .option('u', { alias: 'user', describe: 'RabbitMQ user', type: 'string', demandOption: true })
+      .option('p', { alias: 'password', describe: 'RabbitMQ user', type: 'string', demandOption: true }),
+    async (argv) => {
+      const { host, port, user, password, ssl, originQueue, destinationQueue } = argv;
+      const conn = await amqplib.connect(
+        `amqp${ssl ? 's' : ''}://${user}:${password}@${host}:${port}`,
+      );
+      const channel = await conn.createConfirmChannel();
 
-        conn.createConfirmChannel((err, channel) => {
-            if (err) throw err;
-            
-            channel.checkQueue(destinationQueue);
-            channel.checkQueue(originQueue, (err, ok) => {
-              console.log(ok);
-              const { messageCount } = ok;
+      await channel.checkQueue(destinationQueue);
+      const originStatus = await channel.checkQueue(originQueue);
 
-              let counter = 0;
+      console.log(originStatus);
+      const { messageCount } = originStatus;
 
-              if (messageCount === 0 ){
-                console.log('No messages to shovel.');
-                process.exit(0);
-              }
-
-              channel.consume(originQueue, (msg) => {
-                if (msg !== null) {
-                    channel.ack(msg);
-                    channel.sendToQueue(destinationQueue, msg.content, msg.properties, (err, ok) => {
-                      counter++;
-                      
-                      if (counter === messageCount) {
-                        channel.close();
-                        console.log(`${counter} messages shoveled from ${originQueue} to ${destinationQueue}`);
-                        process.exit(0);
-                      }
-                    });
-                } else {
-                  process.exit(0);
-                }
-              });
-            });
+      let counter = 0;
+      if (messageCount === 0) {
+        console.log('No messages to shovel.');
+      } else {
+        await new Promise((resolve) => {
+          channel.consume(originQueue, (msg) => {
+            if (msg !== null) {
+              channel.ack(msg);
+              channel.sendToQueue(destinationQueue, msg.content, msg.properties,
+                (err, ok) => {
+                  counter += 1;
+                  if (counter === messageCount) resolve();
+                },
+              );
+            } else {
+              console.error('Consumer channel was closed.');
+              resolve();
+            }
+          });
         });
-    });
-  })
-  .parse()
-  
-
+        console.log(
+          `${counter} messages shoveled from ${originQueue} to ${destinationQueue}`,
+        );
+      }
+      await conn.close();
+    },
+  )
+  .help().argv;
