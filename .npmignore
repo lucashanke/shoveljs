@@ -1,0 +1,7 @@
+coverage/
+jest/
+**/**.test.js
+.github/
+docker-compose.yml
+jest.config.js
+.eslintrc.js

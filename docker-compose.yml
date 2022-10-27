@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    container_name: test_rabbitmq
+    image: rabbitmq:3.8.11-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: root
+      RABBITMQ_DEFAULT_PASS: root_password
+    healthcheck:
+      test: "rabbitmq-diagnostics -q ping"
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
