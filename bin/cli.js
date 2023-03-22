@@ -56,7 +56,10 @@ yargs(hideBin(process.argv))
               channel.sendToQueue(destinationQueue, msg.content, msg.properties,
                 async (err, ok) => {
                   counter += 1;
-                  if (counter === messageCount) resolve();
+                  if (counter === messageCount) {
+                    resolve();
+                    return;
+                  }
                   delay && await setDelay(delay);
                   perform();
                 },
