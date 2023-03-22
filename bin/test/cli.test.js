@@ -8,9 +8,11 @@ const port = 5672;
 
 const origin = 'origin.queue';
 const destination = 'destination.queue';
+const limit = 35;
+const delay = 1;
 
-let connection; let
-  channel;
+let connection;
+let channel;
 
 const generateMessages = (length) => {
   const messages = [];
@@ -53,7 +55,7 @@ const runCommand = async (...args) => {
 describe('cli', () => {
   let originalArgv;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     connection = await amqplib.connect(
       `amqp://${user}:${password}@${host}:${port}`,
     );
@@ -92,10 +94,40 @@ describe('cli', () => {
       expect(consoleSpy).toBeCalledWith(
         '100 messages shoveled from origin.queue to destination.queue',
       );
+
+      expect(consoleSpy).not.toBeCalledWith('waiting for break...');
+    });
+
+    it('moves messages with their properties from origin queue to destination queue with delay between messages', async () => {
+      const messages = generateMessages(2);
+
+      const consoleSpy = jest.spyOn(console, 'log');
+
+      await runCommand('move', origin, destination, '-u', user, '-p', password, '-d', delay, '--ssl', 'false');
+
+      await assertMessagesInQueue(messages, destination);
+      expect(consoleSpy).toBeCalledWith(
+        '2 messages shoveled from origin.queue to destination.queue',
+      );
+      expect(consoleSpy).toHaveBeenNthCalledWith(2, 'waiting for break...');
+    });
+
+    it('moves messages with their properties from origin queue to destination queue with message limit', async () => {
+      const messages = generateMessages(100);
+
+      const consoleSpy = jest.spyOn(console, 'log');
+
+      await runCommand('move', origin, destination, '-u', user, '-p', password, '-l', limit, '--ssl', 'false');
+
+      await assertMessagesInQueue(messages.slice(0, limit), destination);
+      expect(consoleSpy).toBeCalledWith(
+        '35 messages shoveled from origin.queue to destination.queue',
+      );
+      expect(consoleSpy).not.toBeCalledWith('waiting for break...');
     });
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await connection.close();
   });
 });
